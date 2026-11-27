@@ -3,6 +3,8 @@ root = true
 # All files
 [*]
 indent_style = space
+# .gitattributes の eol=lf と揃え、IDE が Windows の既定（CRLF）で保存しないようにする。
+end_of_line = lf
 
 # Xml files
 [*.xml]

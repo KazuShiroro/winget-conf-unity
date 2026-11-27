@@ -1,6 +1,75 @@
+# 改行は LF に統一する。core.autocrlf や IDE・Unity の既定（Windows では CRLF）に左右されないよう、ここで固定する。
+# .husky の hook と *.sh も、Git for Windows の sh が CRLF を読めないためこれで LF になる。
+* text=auto eol=lf
+
+# Windows のシェルが CRLF を前提にするものだけ例外にする。
 *.cmd text eol=crlf
 *.bat text eol=crlf
 *.ps1 text eol=crlf
-*.sh text eol=lf
-# Git for Windows の sh は CRLF の hook を読めないため、改行を LF に固定する。
-.husky/* text eol=lf
+
+# 以下は https://github.com/gitattributes/gitattributes/blob/master/Unity.gitattributes から LFS 以外を取り込んだもの。
+# NOTE: LFS の行は入れない。公開サンプルで GitHub の LFS 無料枠（容量・帯域）を消費しないため。
+# NOTE: merge=unityyamlmerge は git 側に同名のマージドライバーを設定したときだけ効く（未設定なら通常のマージになる）。
+# Define macros (only works in top-level gitattributes files)
+[attr]unity-json        eol=lf linguist-language=json
+[attr]unity-yaml        merge=unityyamlmerge eol=lf linguist-language=yaml
+
+# Unity source files
+*.cginc                 text
+*.compute               text linguist-language=hlsl
+*.cs                    text diff=csharp
+*.hlsl                  text linguist-language=hlsl
+*.raytrace              text linguist-language=hlsl
+*.shader                text
+
+# Unity JSON files
+*.asmdef                unity-json
+*.asmref                unity-json
+*.index                 unity-json
+*.inputactions          unity-json
+*.shadergraph           unity-json
+*.shadersubgraph        unity-json
+
+# Unity UI Toolkit files
+*.tss                   text diff=css linguist-language=css
+*.uss                   text diff=css linguist-language=css
+*.uxml                  text linguist-language=xml linguist-detectable
+
+# Unity YAML files
+*.anim                  unity-yaml
+*.asset                 unity-yaml
+*.brush                 unity-yaml
+*.controller            unity-yaml
+*.flare                 unity-yaml
+*.fontsettings          unity-yaml
+*.giparams              unity-yaml
+*.guiskin               unity-yaml
+*.lighting              unity-yaml
+*.mask                  unity-yaml
+*.mat                   unity-yaml
+*.meta                  unity-yaml
+*.mixer                 unity-yaml
+*.overrideController    unity-yaml
+*.playable              unity-yaml
+*.prefab                unity-yaml
+*.preset                unity-yaml
+*.renderTexture         unity-yaml
+*.scenetemplate         unity-yaml
+*.shadervariants        unity-yaml
+*.signal                unity-yaml
+*.spriteatlas           unity-yaml
+*.spriteatlasv2         unity-yaml
+*.terrainlayer          unity-yaml
+*.unity                 unity-yaml
+
+# "physic" for 3D but "physics" for 2D
+*.physicMaterial        unity-yaml
+*.physicsMaterial2D     unity-yaml
+
+# Exclude from GitHub stats and diffs: third-party plugins, packages lock file
+# （Unity プロジェクトがサブフォルダーにあるため、パスに Unity.Client/ を付けている）
+Unity.Client/Assets/Plugins/**           linguist-generated
+Unity.Client/Packages/packages-lock.json linguist-generated
+
+# Exceptions for .asset files such as lightning pre-baking
+LightingData.asset     binary
