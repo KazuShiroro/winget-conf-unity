@@ -1,0 +1,47 @@
+# OS・エディター
+.DS_Store
+Thumbs.db
+.idea/
+.vs/
+.vscode/*
+!.vscode/extensions.json
+
+# ローカル専用・一時ファイル
+*.local*
+.tmp/
+/results/
+
+# .NET（tools/util）
+bin/
+obj/
+
+# Husky.Net が install 時に生成する
+.husky/_/
+
+# Unity（https://github.com/github/gitignore/blob/main/Unity.gitignore を Unity.Client 向けに絞ったもの）
+/Unity.Client/[Ll]ibrary/
+/Unity.Client/[Tt]emp/
+/Unity.Client/[Oo]bj/
+/Unity.Client/[Bb]uild/
+/Unity.Client/[Bb]uilds/
+/Unity.Client/[Ll]ogs/
+/Unity.Client/[Uu]ser[Ss]ettings/
+/Unity.Client/[Mm]emoryCaptures/
+/Unity.Client/[Rr]ecordings/
+/Unity.Client/*.csproj
+/Unity.Client/*.sln
+/Unity.Client/*.slnx
+/Unity.Client/*.user
+/Unity.Client/*.pidb
+/Unity.Client/*.booproj
+/Unity.Client/*.svd
+/Unity.Client/*.pdb
+/Unity.Client/*.mdb
+/Unity.Client/*.opendb
+/Unity.Client/*.VC.db
+/Unity.Client/.vsconfig
+/Unity.Client/.utmp/
+crashlytics-build.properties
+/Unity.Client/.vscode/
+# Unity が生成する難読化された Package Manager の設定。内容を検証できないため公開リポジトリに含めない。
+/Unity.Client/ProjectSettings/PackageManager.policy

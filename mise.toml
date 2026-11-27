@@ -1,0 +1,7 @@
+# 開発ツールの版をそろえる。既知のアドバイザリが残っていない版であることを確認して固定している（2026-11-27 時点）。
+# NOTE: .NET は mise で管理しない。mise の dotnet は DOTNET_ROOT を差し替えるため、Program Files の SDK や
+# Unity・IDE の参照先、~/.dotnet/tools が見えなくなる。SDK は winget で入れ、版の正本は global.json。
+[tools]
+just = "1.59.0"
+# lizard（複雑度の計測）を uvx で動かす。
+uv = "0.13.10"

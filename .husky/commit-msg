@@ -1,0 +1,10 @@
+#!/bin/sh
+. "$(dirname "$0")/_/husky.sh"
+
+# マージコミットは自動生成のメッセージなので検査しない。
+if git rev-parse -q --verify MERGE_HEAD >/dev/null; then
+  exit 0
+fi
+
+# EasyBuild.CommitLinter（https://github.com/easybuild-org/EasyBuild.CommitLinter）
+dotnet commit-linter "$1"

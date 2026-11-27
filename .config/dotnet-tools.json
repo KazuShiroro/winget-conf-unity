@@ -1,0 +1,27 @@
+{
+  "version": 1,
+  "isRoot": true,
+  "tools": {
+    "csharpier": {
+      "version": "1.4.1",
+      "commands": [
+        "csharpier"
+      ],
+      "rollForward": true
+    },
+    "husky": {
+      "version": "0.9.1",
+      "commands": [
+        "husky"
+      ],
+      "rollForward": true
+    },
+    "easybuild.commitlinter": {
+      "version": "2.0.0",
+      "commands": [
+        "commit-linter"
+      ],
+      "rollForward": true
+    }
+  }
+}

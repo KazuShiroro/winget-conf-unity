@@ -1,0 +1,7 @@
+#!/bin/sh
+. "$(dirname "$0")/_/husky.sh"
+
+# Unity .meta のステージ漏れチェック
+just check-unity-meta || exit 1
+
+dotnet husky run --group pre-commit

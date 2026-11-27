@@ -1,0 +1,114 @@
+# 開発ツールの導入からリポジトリの clone、Unity Editor の導入までを行う初回セットアップ。
+# このフォルダー（.config）の onboarding.* と unity-install.cs を同じ場所に置き、ダブルクリックで実行する。
+# 各パッケージの版は、既知の CVE・セキュリティアドバイザリが残っていない最新の安定版であることを確認して固定している（2026-11-27 時点）。
+# NOTE: winget が DSC v3 文書として認識する $schema は、この 2023/08 の URI だけ。
+$schema: https://raw.githubusercontent.com/PowerShell/DSC/main/schemas/2023/08/config/document.json
+metadata:
+  winget:
+    processor:
+      identifier: dscv3
+resources:
+  # NOTE: securityContext: elevated でまとめて昇格すると失敗する（0x800706BA）ため、UAC はパッケージごとに出す。
+  - type: Microsoft.WinGet/Package
+    name: Git
+    properties:
+      id: Git.Git
+      source: winget
+      version: 2.56.1
+    metadata:
+      description: Git for Windows
+  - type: Microsoft.WinGet/Package
+    name: GitHubCli
+    properties:
+      id: GitHub.cli
+      source: winget
+      version: 2.105.0
+    metadata:
+      description: GitHub CLI
+  - type: Microsoft.WinGet/Package
+    name: PowerShell
+    properties:
+      id: Microsoft.PowerShell
+      source: winget
+      version: 7.7.0.0
+    metadata:
+      description: PowerShell 7
+  # global.json（11.0.100, rollForward: latestPatch）と揃える。unity-install.cs と tools/util の実行に使う。
+  - type: Microsoft.WinGet/Package
+    name: DotNetSdk
+    properties:
+      id: Microsoft.DotNet.SDK.11
+      source: winget
+      version: 11.0.100
+    metadata:
+      description: .NET SDK 11
+  - type: Microsoft.WinGet/Package
+    name: Mise
+    properties:
+      id: jdx.mise
+      source: winget
+      version: 2026.11.12
+    metadata:
+      description: mise（mise.toml の版で just と uv を入れる）
+  # NOTE: Unity CLI は Hub が自動で入れて更新し、無効にできないため個別には入れない。
+  - type: Microsoft.WinGet/Package
+    name: UnityHub
+    properties:
+      id: Unity.UnityHub
+      source: winget
+      version: 4.0.1.65535
+    metadata:
+      description: Unity Hub
+  # NOTE: 既定の導入では C++ ワークロードが入らないため、下の CppBuildTools で足す。
+  - type: Microsoft.WinGet/Package
+    name: BuildTools
+    properties:
+      id: Microsoft.VisualStudio.BuildTools
+      source: winget
+      version: 18.12.1
+    metadata:
+      description: Visual Studio Build Tools 2026（IL2CPP のビルドに使う）
+  # NOTE: PowerShellScript（pwsh 版）は構成の開始時点で pwsh を要求するため、WindowsPowerShellScript から pwsh を起動する。
+  # NOTE: このリソースの metadata と properties は ASCII だけで書く。Windows PowerShell 5.1 が日本語を含む JSON を
+  # 壊して読み、setScript が実行されないまま成功扱いになったため。
+  - type: Microsoft.DSC.Transitional/WindowsPowerShellScript
+    name: CloneRepository
+    dependsOn:
+      - Git
+      - GitHubCli
+      - PowerShell
+      - DotNetSdk
+      - UnityHub
+    metadata:
+      description: Authenticate gh, clone the repository, and install Unity Editor in a separate window
+    properties:
+      # 判定は clone 先を聞いたあとでないとできないため、onboarding.ps1 側で行う。
+      testScript: |
+        $false
+      # NOTE: gh は TTY がないとブラウザ認証をしないため、新しいコンソールで開いて終了を待つ。
+      # DSC のプロセスはツール導入前の PATH を持つため、レジストリから読み直す。
+      setScript: |
+        $env:Path = [Environment]::GetEnvironmentVariable('Path', 'Machine') + ';' + [Environment]::GetEnvironmentVariable('Path', 'User')
+        $ps1 = '${WinGetConfigRoot}\onboarding.ps1'
+        $p = Start-Process -FilePath pwsh.exe -ArgumentList @('-NoProfile', '-ExecutionPolicy', 'Bypass', '-File', "`"$ps1`"") -Wait -PassThru
+        if ($p.ExitCode -ne 0) { throw "onboarding.ps1 failed with exit code $($p.ExitCode). See its window for details." }
+  - type: Microsoft.DSC.Transitional/WindowsPowerShellScript
+    name: CppBuildTools
+    dependsOn:
+      - BuildTools
+    metadata:
+      description: Add the C++ build tools workload to Visual Studio Build Tools
+    properties:
+      # Visual Studio 本体に C++ ツールがあっても IL2CPP はビルドできるため、製品を問わず MSVC の有無で判定する。
+      testScript: |
+        $vswhere = Join-Path ([Environment]::GetFolderPath('ProgramFilesX86')) 'Microsoft Visual Studio\Installer\vswhere.exe'
+        if (-not (Test-Path $vswhere)) { return $false }
+        [bool](& $vswhere -products * -requires Microsoft.VisualStudio.Component.VC.Tools.x86.x64 -property instanceId)
+      # 終了コード 3010 は「再起動が必要」を表す成功。
+      setScript: |
+        $installerDir = Join-Path ([Environment]::GetFolderPath('ProgramFilesX86')) 'Microsoft Visual Studio\Installer'
+        $installPath = & (Join-Path $installerDir 'vswhere.exe') -products Microsoft.VisualStudio.Product.BuildTools -version '[18.0,19.0)' -property installationPath | Select-Object -First 1
+        if (-not $installPath) { throw 'Visual Studio Build Tools 2026 was not found.' }
+        $arguments = @('modify', '--installPath', "`"$installPath`"", '--add', 'Microsoft.VisualStudio.Workload.VCTools', '--includeRecommended', '--passive', '--norestart')
+        $p = Start-Process -FilePath (Join-Path $installerDir 'setup.exe') -ArgumentList $arguments -Verb RunAs -Wait -PassThru
+        if ($p.ExitCode -notin 0, 3010) { throw "Visual Studio Installer failed with exit code $($p.ExitCode)." }
